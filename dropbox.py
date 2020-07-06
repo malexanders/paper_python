@@ -1,4 +1,6 @@
 import time
+import os
+import re
 
 def login(driver, sleep=False):
     driver.find_element_by_xpath('//*[@id="page-header"]/a[2]').click()
@@ -24,12 +26,26 @@ def export_as_markdown(driver, sleep=False):
 
     time.sleep(15)
 
-# TODO:
-# Dropbox paper markdown export does not format properly
-# Checkboxes do not have the required double space at the end of each line
-# def format_markdown_checkboxes(file):
-#     # Read file lines
-#     # Where a line starts with [x] || [] || [ ]
-#         # Does it end with 2 spaces?
-#             # If No, add two spaces
-#             # Else, do nothing
+def format_markdown_checkboxes(input_dir, output_dir):
+    file_list = list(os.listdir(input_dir))
+
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+
+    for file in file_list:
+
+        if not file.endswith('.md') or os.path.isdir(input_dir + '/' + file):
+            continue
+
+        with open(input_dir + '/' + file, 'r') as reader:
+            # Note: readlines doesn't trim the line endings
+            markdown_lines = reader.readlines()
+
+        with open(output_dir + '/' + file, 'w') as writer:
+            for line in markdown_lines:
+                # If line starts with [], [ ] or [x] with 0 or more spaces add md line break
+                if re.match(r'^\s*\[]|^\s*\[ ]|^\s*\[x]', line):
+                    new_line = line + '\x20' + '\x20' + '\n'
+                    writer.write(new_line)
+                else:
+                    writer.write(line)
